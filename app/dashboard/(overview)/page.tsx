@@ -7,7 +7,6 @@ import CardWrapper from '@/app/ui/dashboard/cards';
 
  
 export default async function Page() {
-  // const { numberOfCustomers, numberOfInvoices, totalPaidInvoices, totalPendingInvoices } = await fetchCardData();
 
   return (
     <main>
