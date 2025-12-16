@@ -1,12 +1,22 @@
 import type { NextAuthConfig } from 'next-auth';
+
+const publicPaths = ['/resource'];
  
 export const authConfig = {
   pages: {
     signIn: '/login',
   },
   callbacks: {
+    // Middleware authorization logic
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;
+      const pathname = nextUrl.pathname;
+      // allow public paths
+      if (publicPaths.some((path) => pathname.startsWith(path))) { 
+        return true;                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
+      }
+
+      // check if user is on dashboard
       const isOnDashboard = nextUrl.pathname.startsWith('/dashboard');
       if (isOnDashboard) {
         if (isLoggedIn) return true;
