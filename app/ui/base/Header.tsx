@@ -10,12 +10,14 @@ import {
   NavigationMenuViewport,
 } from "@/components/ui/navigation-menu";
 import Link from "next/link";
+import { MainNav } from "./MainNav";
 
 const Header = () => {
   return (
-    <div>
+    <div className="flex justify-center items-center">
+      <MainNav />
       header123
-      <NavigationMenu>
+      {/* <NavigationMenu>
         <NavigationMenuList>
           <NavigationMenuItem>
             <NavigationMenuTrigger>Item One</NavigationMenuTrigger>
@@ -26,11 +28,11 @@ const Header = () => {
           </NavigationMenuItem>
           <NavigationMenuItem>
             <NavigationMenuLink asChild>
-              <Link href="/docs">Documentation</Link>              
+              <Link href="/docs">Documentation</Link>
             </NavigationMenuLink>
           </NavigationMenuItem>
         </NavigationMenuList>
-      </NavigationMenu>
+      </NavigationMenu> */}
     </div>
   );
 };
