@@ -1,8 +1,9 @@
-import SideNav from '@/app/ui/dashboard/sidenav';
-import Header from '@/app/ui/base/Header';
+import SideNav from "@/app/ui/dashboard/sidenav";
+import Header from "@/app/ui/base/Header";
 
-export const experimental_ppr  = true;
- 
+// Route segment config "experimental_ppr" is not compatible with `nextConfig.cacheComponents`. Please remove it.
+// export const experimental_ppr  = true;
+
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="">
