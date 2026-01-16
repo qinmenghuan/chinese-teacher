@@ -2,11 +2,11 @@ import type { NextConfig } from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
-  experimental: {
+  // experimental: {
     // next 15的写法
     // ppr: 'incremental' 
-    cacheComponents: true,
-  },
+    // cacheComponents: true,
+  // },
 };
 
 export default nextConfig;
