@@ -7,6 +7,11 @@ export const authConfig = {
     signIn: '/login',
   },
   callbacks: {
+    async session({ session, token }) {
+      // session.user.id = token.sub; // sub 就是用户ID
+      (session.user as any).id = token.sub;
+      return session;
+    },
     // Middleware authorization logic
     authorized({ auth, request: { nextUrl } }) {
       const isLoggedIn = !!auth?.user;

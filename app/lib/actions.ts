@@ -6,6 +6,7 @@ import { redirect } from 'next/navigation';
 import postgres from 'postgres';
 import { signIn } from '@/auth';
 import { AuthError } from 'next-auth';
+import { auth } from '@/auth';
 
 const sql = postgres(process.env.POSTGRES_URL!, { ssl: 'require' });
 
@@ -24,6 +25,17 @@ const FormSchema = z.object({
   date: z.string(),
 });
 
+const BlogFormSchema = z.object({
+  id: z.string(),
+  title: z.string().min(1,{
+    message: 'Please enter a title.',
+  }),
+  content: z.string().min(1,{
+    message: 'Please enter a content.',
+  }),
+
+  date: z.string(),
+});
 
 const CustomerFormSchema = z.object({
   id: z.string(),
@@ -51,10 +63,23 @@ export type CustomerState = {
   };
   message?: string | null;
 };
+
+export type BlogState = {
+  errors?: {
+    title?: string[];
+    content?: string[];
+  };
+  message?: string | null;
+};
  
 const CreateInvoice = FormSchema.omit({ id: true, date: true });
 // Use Zod to update the expected types
 const UpdateInvoice = FormSchema.omit({ id: true, date: true });
+
+
+const CreateBlog = BlogFormSchema.omit({ id: true, date: true });
+// Use Zod to update the expected types
+const UpdateBlog = BlogFormSchema.omit({ id: true, date: true });
 
 const CreateCustomer = CustomerFormSchema.omit({ id: true });
 // Use Zod to update the expected types
@@ -98,6 +123,52 @@ export async function createInvoice(prevState: State, formData: FormData) {
   redirect('/dashboard/invoices');
 }
 
+export async function createBlog(prevState: BlogState, formData: FormData) {
+  // 获取当前登录用户的 session
+  const session = await auth();
+  console.log("Current session:", session);
+  // 检查用户是否已登录
+  if (!session?.user?.id) {
+    return {
+      message: 'Not authenticated. Please log in.',
+    };
+  }
+
+  const validatedFields = CreateBlog.safeParse({
+    title: formData.get('title'),
+    content: formData.get('content'),
+  });
+
+  // If form validation fails, return errors early. Otherwise, continue.
+  if (!validatedFields.success) {
+    const errors = validatedFields.error.flatten().fieldErrors;
+    console.log('Validation errors:', errors);
+    return {
+      errors: errors,
+      message: 'Missing Fields. Failed to Create Invoice.',
+    };
+  }
+ 
+  const { title, content } = validatedFields.data;
+  // const amountInCents = amount * 100;
+  const date = new Date().toISOString().split('T')[0];
+ 
+  try {
+    await sql`
+      INSERT INTO blogs (user_id, title, content, status, date)
+      VALUES (${session.user.id}, ${title}, ${content}, 'draft', ${date})
+    `;
+  } catch (error) {
+    // We'll also log the error to the console for now
+    console.error(error);
+    return {
+      message: 'Database Error: Failed to Create Blog.',
+    };
+  }
+ 
+  revalidatePath('/dashboard/blogs');
+  redirect('/dashboard/blogs');
+}
 
 export async function createCustomer(prevState: CustomerState, formData: FormData) {
   console.log("createCustomer called", formData);
@@ -139,7 +210,8 @@ export async function createCustomer(prevState: CustomerState, formData: FormDat
 }
 
 
-export async function updateInvoice(id: string,  prevState: State, formData: FormData) {
+export async function updateInvoice(id: string, prevState: State, formData: FormData) {
+  console.log("formData in updateInvoice:", formData);
   // If form validation fails, return errors early. Otherwise, continue.
   const validatedFields = UpdateInvoice.safeParse({
     customerId: formData.get('customerId'),
@@ -176,6 +248,42 @@ export async function updateInvoice(id: string,  prevState: State, formData: For
 }
 
 
+export async function updateBlog(id: string, prevState: BlogState, formData: FormData) {
+  console.log("formData in updateBlog:", formData);
+  // If form validation fails, return errors early. Otherwise, continue.
+  const validatedFields = UpdateBlog.safeParse({
+    title: formData.get('title'),
+    content: formData.get('content'),
+  });
+
+  if (!validatedFields.success) {
+    const errors = validatedFields.error.flatten().fieldErrors;
+    console.log('Validation errors:', errors);
+    return {
+      errors: errors,
+      message: 'Missing Fields. Failed to Create Blog.',
+    };
+  }
+ 
+  const { title, content } = validatedFields.data;
+ 
+  try {
+    await sql`
+        UPDATE blogs
+        SET title = ${title}, content = ${content}
+        WHERE id = ${id}
+      `;
+  } catch (error) {
+    // We'll also log the error to the console for now
+    console.error(error);
+    return { message: 'Database Error: Failed to Update Blog.' };
+  }
+
+  revalidatePath('/dashboard/blogs');
+  redirect('/dashboard/blogs');
+}
+
+
 export async function deleteInvoice(id: string) {
   // throw new Error('Failed to Delete Invoice');
   await sql`DELETE FROM invoices WHERE id = ${id}`;
@@ -205,4 +313,9 @@ export async function authenticate(
     }
     throw error;
   }
+}
+
+export async function deleteBlog(id: string) {
+  await sql`DELETE FROM blogs WHERE id = ${id}`;
+  revalidatePath('/dashboard/blogs');
 }

@@ -86,3 +86,23 @@ export type InvoiceForm = {
   amount: number;
   status: 'pending' | 'paid';
 };
+
+export type BLogForm = {
+  id: string;
+  user_id: string;
+  name: string;
+  title: string;
+  content: string;
+  date: string;
+  status: 'draft' | 'published' | 'archived';
+};
+
+export type BlogsTable = {
+  id: string;
+  user_id: string;
+  name: string;
+  email: string;
+  title: string;
+  date: string;
+  status: 'draft' | 'published' | 'archived';
+};

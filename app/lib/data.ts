@@ -6,6 +6,8 @@ import {
   InvoicesTable,
   LatestInvoiceRaw,
   Revenue,
+  BLogForm,
+  BlogsTable,
 } from './definitions';
 import { formatCurrency } from './utils';
 
@@ -170,6 +172,51 @@ export async function fetchInvoiceById(id: string) {
   }
 }
 
+
+export async function fetchBlogById(id: string) {
+  try {
+    const data = await sql<BLogForm[]>`
+      SELECT
+        blogs.id,
+        blogs.user_id,
+        users.name,
+        blogs.title,
+        blogs.content,
+        blogs.date,
+        blogs.status
+      FROM blogs
+      JOIN users ON blogs.user_id = users.id
+      WHERE blogs.id = ${id};
+    `;
+
+    return data[0];
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch invoice.');
+  }
+}
+
+export async function fetchAllBlogs() {
+  try {
+    const blogs = await sql<BLogForm[]>`
+     SELECT
+        blogs.id,
+        blogs.user_id,
+        users.name,
+        blogs.title,
+        blogs.content,
+        blogs.date,
+        blogs.status
+      FROM blogs
+      JOIN users ON blogs.user_id = users.id
+    `
+    return blogs;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch all blogs.');
+  }
+}
+
 export async function fetchCustomers() {
   try {
     const customers = await sql<CustomerField[]>`
@@ -271,5 +318,62 @@ export async function fetchCustomersPages(query: string) {
   } catch (error) {
     console.error('Database Error:', error);
     throw new Error('Failed to fetch total number of customers.');
+  }
+}
+
+
+export async function fetchFilteredBlogs(
+  query: string,
+  currentPage: number,
+) {
+  const offset = (currentPage - 1) * ITEMS_PER_PAGE;
+
+  try {
+    const blogs = await sql<BlogsTable[]>`
+      SELECT
+        blogs.id,
+        blogs.title,
+        blogs.date,
+        blogs.status,
+        users.name,
+        users.email
+      FROM blogs
+      JOIN users ON blogs.user_id = users.id
+      WHERE
+        users.name ILIKE ${`%${query}%`} OR
+        users.email ILIKE ${`%${query}%`} OR
+        blogs.title ILIKE ${`%${query}%`} OR
+        blogs.date::text ILIKE ${`%${query}%`} OR
+        blogs.status ILIKE ${`%${query}%`}
+      ORDER BY blogs.date DESC
+      LIMIT ${ITEMS_PER_PAGE} OFFSET ${offset}
+    `;
+
+    return blogs;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch blogs.');
+  }
+}
+
+
+export async function fetchBlogsPages(query: string) {
+  try {
+    const data = await sql`SELECT COUNT(*)
+    FROM blogs
+    JOIN users ON blogs.user_id = users.id
+    WHERE
+      users.name ILIKE ${`%${query}%`} OR
+      users.email ILIKE ${`%${query}%`} OR
+      blogs.title ILIKE ${`%${query}%`} OR
+      blogs.date::text ILIKE ${`%${query}%`} OR
+      blogs.status ILIKE ${`%${query}%`}
+  `;
+
+    const totalPages = Math.ceil(Number(data[0].count) / ITEMS_PER_PAGE);
+    return totalPages;
+  } catch (error) {
+    console.error('Database Error:', error);
+    throw new Error('Failed to fetch total number of blogs.');
   }
 }
